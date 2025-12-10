@@ -82,10 +82,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-CHANNEL_ID_RAW = getenv("CHANNEL_ID")
-print("CHANNEL_ID ENV =", CHANNEL_ID_RAW)
-
-CHANNEL_ID = int(CHANNEL_ID_RAW)
-
