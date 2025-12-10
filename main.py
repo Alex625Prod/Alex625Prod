@@ -5,9 +5,9 @@ from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from os import getenv
 
-TOKEN = getenv("8405681842:AAGmLVAyYMA7szfVDLOKn96JXHrVL_3XzjY")
-CHANNEL_ID = int(getenv("-1003126861108"))     
-ADMIN_ID = 7170633811                 
+TOKEN = getenv("BOT_TOKEN")
+CHANNEL_ID = int(getenv("CHANNEL_ID"))
+ADMIN_ID = int(getenv("ADMIN_ID"))            
 
 bot = Bot(token=TOKEN, parse_mode="HTML")
 dp = Dispatcher()
