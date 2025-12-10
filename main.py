@@ -1,37 +1,31 @@
 import asyncio
-import logging
 from os import getenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from aiogram.enums import ParseMode
+from dotenv import load_dotenv  # <- dotenv
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# --- Загружаем .env ---
+load_dotenv()
 
-# Получаем переменные среды
+# --- Переменные ---
 TOKEN = getenv("BOT_TOKEN")
 ADMIN_ID = getenv("ADMIN_ID")
 CHANNEL_ID = getenv("CHANNEL_ID")
 
-# Вместо выбрасывания ошибки сразу, проверяем при запуске
-if not TOKEN:
-    logger.error("❌ BOT_TOKEN не найден в переменных среды Railway")
-    logger.info("👉 Добавьте BOT_TOKEN в раздел Variables вашего проекта в Railway")
-if not ADMIN_ID:
-    logger.error("❌ ADMIN_ID не найден в переменных среды Railway")
-if not CHANNEL_ID:
-    logger.error("❌ CHANNEL_ID не найден в переменных среды Railway")
+# Проверка
+if TOKEN is None:
+    raise ValueError("Не найден токен бота в .env")
+if ADMIN_ID is None:
+    raise ValueError("Не найден ADMIN_ID в .env")
+if CHANNEL_ID is None:
+    raise ValueError("Не найден CHANNEL_ID в .env")
 
-# Инициализация бота и диспетчера
-try:
-    bot = Bot(token=TOKEN, parse_mode=ParseMode.HTML)
-    dp = Dispatcher()
-    logger.info("✅ Бот инициализирован")
-except Exception as e:
-    logger.error(f"❌ Ошибка инициализации бота: {e}")
-    exit(1)
+ADMIN_ID = int(ADMIN_ID)  # Telegram ID всегда int
+
+# --- Инициализация бота ---
+bot = Bot(token=TOKEN, parse_mode="HTML")
+dp = Dispatcher()
 
 moderation_storage = {}  # хранение сообщений на модерации
 
@@ -49,88 +43,55 @@ async def start(message: Message):
 # --- Получаем сообщения от пользователя ---
 @dp.message()
 async def receive_from_user(message: Message):
-    if message.text and message.text.startswith('/'):
-        return  # Игнорируем команды
-    
     await message.answer("Спасибо, отправил на проверку. Жди.")
 
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✅ Опубликовать", callback_data=f"ok_{message.message_id}"),
-            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"no_{message.message_id}")
+            InlineKeyboardButton(text="Опубликовать", callback_data=f"ok_{message.message_id}"),
+            InlineKeyboardButton(text="Отклонить", callback_data=f"no_{message.message_id}")
         ]
     ])
 
-    # Пересылаем сообщение администратору
-    try:
-        forwarded = await message.forward(chat_id=ADMIN_ID)
-        admin_msg = await bot.send_message(
-            chat_id=ADMIN_ID,
-            text=f"📩 Новое на модерацию\nID пользователя: {message.from_user.id}",
-            reply_markup=kb
-        )
+    forwarded = await message.forward(ADMIN_ID)
+    admin_msg = await bot.send_message(
+        ADMIN_ID,
+        f"Новое на модерацию (ID пользователя: {message.from_user.id})",
+        reply_markup=kb
+    )
 
-        moderation_storage[forwarded.message_id] = {
-            "user_id": message.from_user.id,
-            "original_id": message.message_id,
-            "admin_msg_id": admin_msg.message_id,
-            "user_chat_id": message.chat.id
-        }
-        logger.info(f"Сообщение от {message.from_user.id} отправлено на модерацию")
-    except Exception as e:
-        logger.error(f"Ошибка при пересылке: {e}")
-        await message.answer("Произошла ошибка при отправке на модерацию")
+    moderation_storage[forwarded.message_id] = {
+        "user_id": message.from_user.id,
+        "original_id": message.message_id,
+        "admin_msg_id": admin_msg.message_id
+    }
 
 # --- Обработка кнопок админа ---
 @dp.callback_query(lambda c: c.data and (c.data.startswith("ok_") or c.data.startswith("no_")))
 async def process_buttons(callback: CallbackQuery):
-    try:
-        action, orig_msg_id = callback.data.split("_")
-        orig_msg_id = int(orig_msg_id)
+    action, orig_msg_id = callback.data.split("_")
+    orig_msg_id = int(orig_msg_id)
 
-        info = moderation_storage.pop(orig_msg_id, None)
-        if not info:
-            await callback.answer("Уже обработано")
-            return
+    info = moderation_storage.pop(orig_msg_id, None)
+    if not info:
+        await callback.answer("Уже обработано")
+        return
 
-        user_id = info["user_id"]
-        user_chat_id = info.get("user_chat_id", user_id)
+    user_id = info["user_id"]
 
-        if action == "ok":
-            # Публикуем в канал
-            await bot.forward_message(
-                chat_id=CHANNEL_ID,
-                from_chat_id=ADMIN_ID,
-                message_id=orig_msg_id
-            )
-            await bot.send_message(chat_id=user_chat_id, text="✅ Опубликовано анонимно")
-            await callback.message.edit_text("✅ Опубликовано в канал")
-            logger.info(f"Сообщение {orig_msg_id} опубликовано в канал")
-        else:
-            # Отклоняем
-            await bot.send_message(chat_id=user_chat_id, text="❌ Отклонено — нарушает правила.")
-            await callback.message.edit_text("❌ Отклонено")
-            logger.info(f"Сообщение {orig_msg_id} отклонено")
+    if action == "ok":
+        await bot.forward_message(CHANNEL_ID, ADMIN_ID, orig_msg_id)
+        await bot.send_message(user_id, "Опубликовано анонимно ✅")
+        await callback.message.edit_text("Опубликовано ✅")
+    else:
+        await bot.send_message(user_id, "Отклонено — нарушает правила.")
+        await callback.message.edit_text("Отклонено ❌")
 
-        await callback.answer()
-    except Exception as e:
-        logger.error(f"Ошибка обработки кнопки: {e}")
-        await callback.answer("Произошла ошибка")
+    await callback.answer()
 
 # --- Запуск бота ---
 async def main():
-    try:
-        logger.info("🚀 Бот с модерацией запущен")
-        logger.info(f"Admin ID: {ADMIN_ID}")
-        logger.info(f"Channel ID: {CHANNEL_ID}")
-        
-        # Удаляем вебхук если был
-        await bot.delete_webhook(drop_pending_updates=True)
-        
-        # Запускаем поллинг
-        await dp.start_polling(bot)
-    except Exception as e:
-        logger.error(f"Фатальная ошибка: {e}")
+    print("Бот с модерацией запущен — всё под контролем")
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
