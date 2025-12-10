@@ -1,19 +1,32 @@
 import asyncio
-import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from os import getenv
 
-TOKEN = getenv("BOT_TOKEN")
-CHANNEL_ID = getenv("CHANNEL_ID")
-ADMIN_ID = getenv("ADMIN_ID")           
+# --- Переменные окружения ---
+TOKEN = getenv("BOT_TOKEN")  # токен бота
+CHANNEL_ID = getenv("CHANNEL_ID")  # можно оставить тег канала: "@podslushano_myschool"
+ADMIN_ID = getenv("ADMIN_ID")  # твой Telegram ID
 
+# --- Проверка ---
+if TOKEN is None:
+    raise ValueError("Не найден токен бота! Установи BOT_TOKEN в переменных окружения.")
+if ADMIN_ID is None:
+    raise ValueError("Не найден ADMIN_ID! Установи ADMIN_ID в переменных окружения.")
+if CHANNEL_ID is None:
+    raise ValueError("Не найден CHANNEL_ID! Установи CHANNEL_ID в переменных окружения.")
+
+# Преобразуем ADMIN_ID в int
+ADMIN_ID = int(ADMIN_ID)
+
+# --- Инициализация бота ---
 bot = Bot(token=TOKEN, parse_mode="HTML")
 dp = Dispatcher()
 
 moderation_storage = {}  # храним сообщения на модерации
 
+# --- Команда /start ---
 @dp.message(Command("start"))
 async def start(message: Message):
     await message.answer(
@@ -24,12 +37,11 @@ async def start(message: Message):
         "Нарушил — больше никогда не напишешь."
     )
 
-# Пользователь прислал что угодно
+# --- Получаем сообщения от пользователя ---
 @dp.message()
 async def receive_from_user(message: Message):
     await message.answer("Спасибо, отправил на проверку. Жди.")
 
-    # Кнопки для админа
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="Опубликовать", callback_data=f"ok_{message.message_id}"),
@@ -37,7 +49,6 @@ async def receive_from_user(message: Message):
         ]
     ])
 
-    # Пересылаем админу
     forwarded = await message.forward(ADMIN_ID)
     admin_msg = await bot.send_message(
         ADMIN_ID,
@@ -45,14 +56,13 @@ async def receive_from_user(message: Message):
         reply_markup=kb
     )
 
-    # Запоминаем, чтобы потом отредактировать
     moderation_storage[forwarded.message_id] = {
         "user_id": message.from_user.id,
         "original_id": message.message_id,
         "admin_msg_id": admin_msg.message_id
     }
 
-# Админ нажал кнопку
+# --- Обработка кнопок админа ---
 @dp.callback_query(lambda c: c.data and (c.data.startswith("ok_") or c.data.startswith("no_")))
 async def process_buttons(callback: CallbackQuery):
     action, orig_msg_id = callback.data.split("_")
@@ -66,7 +76,7 @@ async def process_buttons(callback: CallbackQuery):
     user_id = info["user_id"]
 
     if action == "ok":
-        # Публикуем в канал
+        # Публикуем в канал (можно использовать тег)
         await bot.forward_message(CHANNEL_ID, ADMIN_ID, orig_msg_id)
         await bot.send_message(user_id, "Опубликовано анонимно ✅")
         await callback.message.edit_text("Опубликовано ✅")
@@ -76,6 +86,7 @@ async def process_buttons(callback: CallbackQuery):
 
     await callback.answer()
 
+# --- Запуск бота ---
 async def main():
     print("Бот с модерацией запущен — всё под контролем")
     await dp.start_polling(bot)
