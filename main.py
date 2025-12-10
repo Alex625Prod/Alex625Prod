@@ -5,7 +5,7 @@ from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from os import getenv
 
-TOKEN = getenv("8405681842:AAGSxrm5F6ReReVXeRPDlU0u0qwvFcAjHvY")
+TOKEN = getenv("8405681842:AAGmLVAyYMA7szfVDLOKn96JXHrVL_3XzjY")
 CHANNEL_ID = int(getenv("-1003126861108"))     
 ADMIN_ID = 7170633811                 
 
