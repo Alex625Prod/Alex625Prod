@@ -6,7 +6,7 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from os import getenv
 
 TOKEN = getenv("BOT_TOKEN")
-CHANNEL_ID = "@HoneyAcademka_podslushano"
+CHANNEL_ID = "ADMIN_ID"
 ADMIN_ID = int(getenv("Xabib_nurmagomedoB"))            
 
 bot = Bot(token=TOKEN, parse_mode="HTML")
