@@ -3,23 +3,19 @@ from os import getenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from dotenv import load_dotenv  # <- dotenv
 
-# --- Загружаем .env ---
-load_dotenv()
-
-# --- Переменные ---
+# --- Переменные из среды Railway ---
 TOKEN = getenv("BOT_TOKEN")
 ADMIN_ID = getenv("ADMIN_ID")
 CHANNEL_ID = getenv("CHANNEL_ID")
 
-# Проверка
-if TOKEN is None:
-    raise ValueError("Не найден токен бота в .env")
-if ADMIN_ID is None:
-    raise ValueError("Не найден ADMIN_ID в .env")
-if CHANNEL_ID is None:
-    raise ValueError("Не найден CHANNEL_ID в .env")
+# --- Проверка наличия ---
+if not TOKEN:
+    raise ValueError("Не найден BOT_TOKEN в переменных среды")
+if not ADMIN_ID:
+    raise ValueError("Не найден ADMIN_ID в переменных среды")
+if not CHANNEL_ID:
+    raise ValueError("Не найден CHANNEL_ID в переменных среды")
 
 ADMIN_ID = int(ADMIN_ID)  # Telegram ID всегда int
 
