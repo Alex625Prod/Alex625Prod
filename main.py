@@ -1,4 +1,5 @@
 import asyncio
+import os
 from os import getenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
@@ -17,11 +18,6 @@ if not ADMIN_ID:
 if not CHANNEL_ID:
     raise ValueError("Не найден CHANNEL_ID в переменных среды")
 
-ADMIN_ID = int(ADMIN_ID)  # Telegram ID всегда int
-
-# --- Инициализация бота ---
-bot = Bot(token=TOKEN, parse_mode="HTML")
-dp = Dispatcher()
 
 moderation_storage = {}  # хранение сообщений на модерации
 
