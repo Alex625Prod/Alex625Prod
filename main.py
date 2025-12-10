@@ -1,30 +1,33 @@
 import asyncio
+from os import getenv
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from os import getenv
+from dotenv import load_dotenv  # <- dotenv
 
-# --- Переменные окружения ---
-TOKEN = getenv("BOT_TOKEN")  
-CHANNEL_ID = getenv("CHANNEL_ID")  
-ADMIN_ID = getenv("ADMIN_ID")  
+# --- Загружаем .env ---
+load_dotenv()
 
-# --- Проверка ---
+# --- Переменные ---
+TOKEN = getenv("BOT_TOKEN")
+ADMIN_ID = getenv("ADMIN_ID")
+CHANNEL_ID = getenv("CHANNEL_ID")
+
+# Проверка
 if TOKEN is None:
-    raise ValueError("Не найден токен бота! Установи BOT_TOKEN в переменных окружения.")
+    raise ValueError("Не найден токен бота в .env")
 if ADMIN_ID is None:
-    raise ValueError("Не найден ADMIN_ID! Установи ADMIN_ID в переменных окружения.")
+    raise ValueError("Не найден ADMIN_ID в .env")
 if CHANNEL_ID is None:
-    raise ValueError("Не найден CHANNEL_ID! Установи CHANNEL_ID в переменных окружения.")
+    raise ValueError("Не найден CHANNEL_ID в .env")
 
-# Преобразуем ADMIN_ID в int
-ADMIN_ID = int(ADMIN_ID)
+ADMIN_ID = int(ADMIN_ID)  # Telegram ID всегда int
 
 # --- Инициализация бота ---
 bot = Bot(token=TOKEN, parse_mode="HTML")
 dp = Dispatcher()
 
-moderation_storage = {}  # храним сообщения на модерации
+moderation_storage = {}  # хранение сообщений на модерации
 
 # --- Команда /start ---
 @dp.message(Command("start"))
@@ -76,7 +79,6 @@ async def process_buttons(callback: CallbackQuery):
     user_id = info["user_id"]
 
     if action == "ok":
-        # Публикуем в канал (можно использовать тег)
         await bot.forward_message(CHANNEL_ID, ADMIN_ID, orig_msg_id)
         await bot.send_message(user_id, "Опубликовано анонимно ✅")
         await callback.message.edit_text("Опубликовано ✅")
