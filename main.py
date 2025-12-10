@@ -5,9 +5,9 @@ from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, C
 from os import getenv
 
 # --- Переменные окружения ---
-TOKEN = getenv("BOT_TOKEN")  # токен бота
-CHANNEL_ID = getenv("CHANNEL_ID")  # можно оставить тег канала: "@podslushano_myschool"
-ADMIN_ID = getenv("ADMIN_ID")  # твой Telegram ID
+TOKEN = getenv("BOT_TOKEN")  
+CHANNEL_ID = getenv("CHANNEL_ID")  
+ADMIN_ID = getenv("ADMIN_ID")  
 
 # --- Проверка ---
 if TOKEN is None:
