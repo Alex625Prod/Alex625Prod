@@ -5,9 +5,9 @@ from aiogram.filters import Command
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from os import getenv
 
-TOKEN = getenv("TOKEN")
-CHANNEL_ID = getenv("CHANNEL_ID")      # твой канал, например @aHA_podslushanoBot
-ADMIN_ID = 5510873181                  # @ACAB500 — твой цифровой ID (не меняй, если ты это ты)
+TOKEN = getenv("8405681842:AAGSxrm5F6ReReVXeRPDlU0u0qwvFcAjHvY")
+CHANNEL_ID = getenv("-1003126861108")     
+ADMIN_ID = 7170633811                 
 
 bot = Bot(token=TOKEN, parse_mode="HTML")
 dp = Dispatcher()
@@ -21,11 +21,7 @@ async def start(message: Message):
         "
         "Отправляй секреты, сплетни, мемы, фото и видео — всё пойдёт в канал только после моей проверки.\n\n"
         "<b>Мгновенно отклоняется и бан:</b>\n"
-        "• Порно, интим, голые фото и намёки\n"
-        "• Наркотики и всё, что связано с ними\n"
-        "• Угрозы, травля, призывы к насилию\n"
-        "• Личные данные, номера, адреса, паспорта\n"
-        "• Любое другое, что запрещено законом РФ\n\n"
+        "• Личные данные, номера, адреса, паспорта и тому подобное\n"
         "Нарушил — больше никогда не напишешь."
     )
 
